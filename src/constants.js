@@ -1,40 +1,42 @@
 // Definición de las columnas del tablero, en el orden del ciclo Deming (PDCA).
 // El `id` se guarda en la columna `column_id` de la tabla `tasks` en Supabase.
+// Progresión de verdes: de un verde agrisado y apagado en Backlog que va
+// ganando intensidad columna a columna hasta el verde más vivo en Act.
 export const COLUMNS = [
   {
     id: 'backlog',
     title: 'Backlog',
     description: 'Pendientes o retrasadas',
-    color: '#64748b', // slate
-    accent: 'rgba(100, 116, 139, 0.15)',
+    color: '#7c8a7c', // verde agrisado / apagado
+    accent: 'rgba(124, 138, 124, 0.15)',
   },
   {
     id: 'plan',
     title: 'Plan',
     description: 'Planificadas',
-    color: '#3b82f6', // azul
-    accent: 'rgba(59, 130, 246, 0.15)',
+    color: '#6b9e74', // verde suave
+    accent: 'rgba(107, 158, 116, 0.15)',
   },
   {
     id: 'do',
     title: 'Do',
     description: 'En ejecución',
-    color: '#f59e0b', // ámbar
-    accent: 'rgba(245, 158, 11, 0.15)',
+    color: '#4fa35f', // verde medio
+    accent: 'rgba(79, 163, 95, 0.15)',
   },
   {
     id: 'check',
     title: 'Check',
     description: 'En revisión',
-    color: '#a855f7', // morado
-    accent: 'rgba(168, 85, 247, 0.15)',
+    color: '#2ea35a', // verde más intenso
+    accent: 'rgba(46, 163, 90, 0.15)',
   },
   {
     id: 'act',
     title: 'Act',
     description: 'Completadas / implementadas',
-    color: '#22c55e', // verde
-    accent: 'rgba(34, 197, 94, 0.15)',
+    color: '#16a34a', // verde intenso (marca)
+    accent: 'rgba(22, 163, 74, 0.15)',
   },
 ]
 
