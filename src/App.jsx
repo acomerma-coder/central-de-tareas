@@ -7,9 +7,11 @@ import {
   deleteTask,
   persistPositions,
 } from './api/tasks'
+import { supabase } from './supabaseClient'
 import Board from './components/Board'
 import Filters from './components/Filters'
 import TaskModal from './components/TaskModal'
+import Login from './components/Login'
 
 const isColumnId = (id) => COLUMNS.some((c) => c.id === id)
 
@@ -28,6 +30,10 @@ function groupByColumn(tasks) {
 }
 
 export default function App() {
+  // Sesión de Supabase Auth. Sin sesión, se muestra el login.
+  const [session, setSession] = useState(null)
+  const [authReady, setAuthReady] = useState(false)
+
   const [tasks, setTasks] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -39,8 +45,22 @@ export default function App() {
   // Estado del modal: { open, task, defaultColumn }
   const [modal, setModal] = useState({ open: false, task: null, defaultColumn: null })
 
-  // Carga inicial desde Supabase.
+  // Sesión: leemos la actual y nos suscribimos a los cambios (login/logout).
   useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session)
+      setAuthReady(true)
+    })
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
+      setSession(s)
+    })
+    return () => sub.subscription.unsubscribe()
+  }, [])
+
+  // Carga de tareas desde Supabase. Solo cuando hay sesión iniciada.
+  useEffect(() => {
+    if (!session) return
+    setLoading(true)
     ;(async () => {
       try {
         const data = await fetchTasks()
@@ -54,7 +74,12 @@ export default function App() {
         setLoading(false)
       }
     })()
-  }, [])
+  }, [session])
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut()
+    setTasks([])
+  }
 
   // Lista de responsables únicos para el filtro.
   const assignees = useMemo(() => {
@@ -178,12 +203,30 @@ export default function App() {
     }
   }
 
+  // --- Gate de autenticación ---
+  if (!authReady) {
+    return <div className="loading">Cargando…</div>
+  }
+  if (!session) {
+    return <Login />
+  }
+
   return (
     <div className="app">
       <header className="app__header">
-        <h1 className="app__title">
-          Central de Tareas: Freedom - The Twin Factory
-        </h1>
+        <div className="app__heading">
+          <h1 className="app__title">
+            Central de Tareas: Freedom - The Twin Factory
+          </h1>
+          <div className="app__session">
+            <span className="app__user" title="Sesión iniciada">
+              {session.user?.email}
+            </span>
+            <button className="btn btn--ghost btn--sm" onClick={handleSignOut}>
+              Salir
+            </button>
+          </div>
+        </div>
         <Filters
           assignees={assignees}
           filterAssignee={filterAssignee}
