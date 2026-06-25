@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { PRIORITIES, LABEL_COLORS, COLUMNS } from '../constants'
-import { uploadAttachment, removeAttachment } from '../api/tasks'
+import { uploadAttachment, removeAttachment, getAttachmentUrl } from '../api/tasks'
 
 // Modal para crear o editar una tarjeta.
 // Si recibe `task` con id => modo edición; si no => modo creación.
@@ -56,6 +56,16 @@ export default function TaskModal({ task, defaultColumn, onClose, onSave, onDele
     } finally {
       setUploading(false)
       e.target.value = '' // permite re-subir el mismo archivo
+    }
+  }
+
+  // Abre un adjunto generando una URL firmada al vuelo (bucket privado).
+  const openAttachment = async (att) => {
+    try {
+      const url = await getAttachmentUrl(att.path)
+      window.open(url, '_blank', 'noopener,noreferrer')
+    } catch (err) {
+      setError(`No se pudo abrir el adjunto: ${err.message}`)
     }
   }
 
@@ -190,9 +200,14 @@ export default function TaskModal({ task, defaultColumn, onClose, onSave, onDele
             <ul className="attachments">
               {form.attachments.map((att) => (
                 <li key={att.path}>
-                  <a href={att.url} target="_blank" rel="noreferrer">
+                  <button
+                    type="button"
+                    className="attachments__open"
+                    onClick={() => openAttachment(att)}
+                    title="Abrir adjunto"
+                  >
                     📎 {att.name}
-                  </a>
+                  </button>
                   <button
                     type="button"
                     className="attachments__remove"

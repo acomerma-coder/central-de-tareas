@@ -64,7 +64,9 @@ export async function persistPositions(items) {
 //  Adjuntos (Supabase Storage, bucket "attachments")
 // -------------------------------------------------------------
 
-// Sube un archivo y devuelve { name, path, url } para guardar en la tarjeta.
+// Sube un archivo y devuelve { name, path } para guardar en la tarjeta.
+// El bucket es PRIVADO, así que NO guardamos una URL pública: la URL se
+// genera firmada y caducable en el momento de abrir el adjunto.
 export async function uploadAttachment(file, taskIdHint = 'tmp') {
   // Ruta única: <taskId>/<timestamp>-<nombre saneado>
   const safeName = file.name.replace(/[^\w.\-]/g, '_')
@@ -77,9 +79,18 @@ export async function uploadAttachment(file, taskIdHint = 'tmp') {
 
   if (error) throw error
 
-  const { data } = supabase.storage.from(ATTACHMENTS_BUCKET).getPublicUrl(path)
+  return { name: file.name, path }
+}
 
-  return { name: file.name, path, url: data.publicUrl }
+// Genera una URL firmada (temporal) para abrir/descargar un adjunto.
+// Por defecto caduca en 1 hora. Solo funciona si el usuario está autenticado
+// y cumple la política RLS del bucket.
+export async function getAttachmentUrl(path, expiresIn = 3600) {
+  const { data, error } = await supabase.storage
+    .from(ATTACHMENTS_BUCKET)
+    .createSignedUrl(path, expiresIn)
+  if (error) throw error
+  return data.signedUrl
 }
 
 // Borra un archivo del bucket dado su path.
